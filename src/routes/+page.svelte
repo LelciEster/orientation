@@ -1,70 +1,58 @@
-
 <script>
-  import { onMount } from 'svelte';
-
-  let alpha = $state(null);
-  let beta = $state(null);
-  let gamma = $state(null);
-  let message = $state('Click the button to start.');
-
-  let listening = false;
-
-  function handleOrientation(event) {
-    alpha = event.alpha;
-    beta = event.beta;
-    gamma = event.gamma;
-  }
-
-  async function startOrientation() {
-    if (!('DeviceOrientationEvent' in window)) {
-      message = 'Device orientation is not supported.';
-      return;
+    import { onMount } from 'svelte';
+ 
+    let alpha = $state(null);
+    let beta = $state(null);
+    let gamma = $state(null);
+    let status = $state('Sensor noch nicht gestartet');
+ 
+    function updateOrientation(event) {
+        alpha = event.alpha;
+        beta = event.beta;
+        gamma = event.gamma;
     }
-
-    try {
-      // Required by iOS Safari
-      if (
-        typeof DeviceOrientationEvent.requestPermission === 'function'
-      ) {
-        const permission =
-          await DeviceOrientationEvent.requestPermission();
-
-        if (permission !== 'granted') {
-          message = 'Permission denied.';
-          return;
+ 
+    async function startSensor() {
+        if (!window.DeviceOrientationEvent) {
+            status = 'Device orientation not supported';
+            return;
         }
-      }
-
-      window.addEventListener(
-        'deviceorientation',
-        handleOrientation
-      );
-
-      listening = true;
-      message = 'Reading device orientation...';
-    } catch (error) {
-      message = 'Could not access device orientation.';
-      console.error(error);
+ 
+        // Berechtigung für iPhone
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceOrientationEvent.requestPermission();
+ 
+                if (permission !== 'granted') {
+                    status = 'Permission denied';
+                    return;
+                }
+            } catch (error) {
+                status = 'Permission error';
+                return;
+            }
+        }
+ 
+        window.removeEventListener('deviceorientation', updateOrientation);
+        window.addEventListener('deviceorientation', updateOrientation);
+ 
+        status = 'Waiting for sensor data...';
     }
-  }
-
-  onMount(() => {
-    return () => {
-      window.removeEventListener(
-        'deviceorientation',
-        handleOrientation
-      );
-    };
-  });
+ 
+    onMount(() => {
+        return () => {
+            window.removeEventListener('deviceorientation', updateOrientation);
+        };
+    });
 </script>
-
+ 
 <h1>Device Orientation</h1>
-
-<button onclick={startOrientation} disabled={listening}>
-  Start orientation
-</button>
-
-<p>{message}</p>
-<p>Alpha: {alpha ?? 'Waiting for data...'}</p>
-<p>Beta: {beta ?? 'Waiting for data...'}</p>
-<p>Gamma: {gamma ?? 'Waiting for data...'}</p>
+ 
+<button onclick={startSensor}>Start Sensor</button>
+ 
+<p>{status}</p>
+ 
+<p>Alpha: {alpha}</p>
+<p>Beta: {beta}</p>
+<p>Gamma: {gamma}</p>
+ 
