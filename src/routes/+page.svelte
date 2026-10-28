@@ -1,16 +1,16 @@
 <script>
   import { onMount } from 'svelte';
 
-  let value = 6;
-  let angle = 0;
-  let hasOrientation = false;
-  let hasMotion = false;
-  let rolling = false;
-  let mode = 'ready';
-  let permissionMessage = '';
-  let statusMessage = 'READY TO PLAY';
-  let helperMessage = 'Hold it flat, face up for 6 · face down for 1';
-  let toastMessage = '';
+  let value = $state(6);
+  let angle = $state(0);
+  let hasOrientation = $state(false);
+  let hasMotion = $state(false);
+  let rolling = $state(false);
+  let mode = $state('ready');
+  let permissionMessage = $state('');
+  let statusMessage = $state('READY TO PLAY');
+  let helperMessage = $state('Hold it flat, face up for 6 · face down for 1');
+  let toastMessage = $state('');
   let toastTimer;
   let lastShake = 0;
   let lastVector = null;
@@ -26,11 +26,11 @@
     6: [0, 2, 3, 5, 6, 8]
   };
 
-  $: label = value === 6
+  let label = $derived(value === 6
     ? 'FACE UP · LUCKY SIX'
     : value === 1
       ? 'FACE DOWN · SNAKE EYES'
-      : `TILT LOCKED · ${value} OF 6`;
+      : `TILT LOCKED · ${value} OF 6`);
 
   function showToast(message) {
     toastMessage = message;
@@ -173,8 +173,6 @@
       setMode('ready', 'Tap start, then shake to roll.');
     }
 
-    
-
     return () => {
       window.removeEventListener('deviceorientation', updateOrientation);
       window.removeEventListener('devicemotion', updateMotion);
@@ -219,9 +217,9 @@
 
   <div class="controls">
     {#if permissionMessage}
-      <div class="permission">{permissionMessage} <button on:click={enableSensors}>Enable sensors</button></div>
+      <div class="permission">{permissionMessage} <button onclick={enableSensors}>Enable sensors</button></div>
     {/if}
-    <button class="roll" on:click={handleRoll}>
+    <button class="roll" onclick={handleRoll}>
       <span class="button-content"><span class="shake-icon">✦</span><span>{rolling ? 'ROLLING…' : 'SHAKE TO ROLL'}</span></span>
     </button>
     <p class="helper">{helperMessage}</p>
